@@ -1,6 +1,8 @@
+import json
 import os
 from abc import abstractmethod, ABC
 from configparser import ParsingError
+from pprint import pprint
 
 import requests as requests
 
@@ -14,7 +16,7 @@ class AbstractClass(ABC):
 class HeadHunterAPI(AbstractClass):
     def __init__(self, keyword):
         self.__header = {
-            "User-Agent":"Mozilla/5.0 (platform; rv:geckoversion) Gecko/geckotrail Firefox/firefoxversion"
+            "User-Agent": "Mozilla/5.0 (platform; rv:geckoversion) Gecko/geckotrail Firefox/firefoxversion"
         }
         self.__params = {
             "text": keyword,
@@ -57,7 +59,7 @@ class HeadHunterAPI(AbstractClass):
 
     def get_vacancies(self, pages_count=1):
         while self.__params['page'] < pages_count:
-            print(f"HeadHunter, Парсинг страницы {self.__params['page'] +1}", end=": ")
+            print(f"HeadHunter, Парсинг страницы {self.__params['page'] + 1}", end=": ")
             try:
                 values = self.get_request()
             except ParsingError:
@@ -109,7 +111,7 @@ class SuperJobAPI(AbstractClass):
 
     def get_vacancies(self, pages_count=1):
         while self.__params['page'] < pages_count:
-            print(f"SuperJob, Парсинг страницы {self.__params['page'] +1}", end=": ")
+            print(f"SuperJob, Парсинг страницы {self.__params['page'] + 1}", end=": ")
             try:
                 values = self.get_request()
             except ParsingError:
@@ -120,9 +122,43 @@ class SuperJobAPI(AbstractClass):
             self.__params['page'] += 1
 
 
+class Connector:
+    def __init__(self, keyword, vacancies_json):
+        self.__filename = f'{keyword.title}.json'
+        self.insert(self.vacancies_json)
 
+    def insert(self, vacencies_json):
+        with open(self.__filename, "w", encoding='utf-8') as f:
+            json.dump(vacencies_json, f, ensure_ascii=False, indent=4)
 
-
-class Connector():
     def select(self):
-        pass
+        with open(self.__filename, "r", encoding='utf-8') as f:
+            data = json.load(f)
+        vacencies = [Vacancy(x['id'], x['title'], x['url'], x['salary_from'], x['salary_to'], x['employer'], x['api'])
+                     for x in data]
+
+
+class Vacancy:
+    __slots__ = ('id', 'title', 'url', 'salary_from', 'salary_to', 'employer', 'api')
+
+    def __init__(self, vacancy_id, title, url, salary_from, salary_to, employer, api):
+        self.id = vacancy_id
+        self.url = url
+        self.salary_from = salary_from
+        self.salary_to = salary_to
+        self.employer = employer
+        self.api = api
+
+    def __gt__(self, other):
+        if not other.salary_min:
+            return True
+        elif not self.salary_min:
+            return False
+        return self.salary_min >= other.salary_min
+
+    def __str__(self):
+        salary_from = f'От {self.salary_from}' if self.salary_from else ''
+        salary_to = f'До {self.salary_to}' if self.salary_to else ''
+        if self.salary_from is None and self.salary_to is None:
+            self.salary_from = 'Не указана'
+        return f'Вакансия \"{self.title}\" \nКомпания: \"{self.employer}\" \n Зарплата: {self.salary_from} {self.salary_to} \nURL:{self.url}'

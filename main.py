@@ -1,4 +1,6 @@
-from classes import HeadHunterAPI, SuperJobAPI
+from pprint import pprint
+
+from classes import HeadHunterAPI, SuperJobAPI, Connector
 
 
 def main():
@@ -11,11 +13,15 @@ def main():
     superjob_api = SuperJobAPI(keyword)
 
     for api in (hh_api, superjob_api):
-        api.get_vacancies(pages_count=2)
+        api.get_vacancies(pages_count=1)
         vacancies_json.extend(api.get_formatted_vacancies())
-    exit()
+
+    #pprint(vacancies_json)
+    #pprint(vacancies_json[-1])
+    #exit()
 
     connector = Connector(keyword=keyword, vacancies_json=vacancies_json)
+    exit()
 
     while True:
         command = input(
