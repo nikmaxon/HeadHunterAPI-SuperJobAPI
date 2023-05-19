@@ -124,8 +124,8 @@ class SuperJobAPI(AbstractClass):
 
 class Connector:
     def __init__(self, keyword, vacancies_json):
-        self.__filename = f'{keyword.title}.json'
-        self.insert(self.vacancies_json)
+        self.__filename = f'{keyword.title()}.json'
+        self.insert(vacancies_json)
 
     def insert(self, vacencies_json):
         with open(self.__filename, "w", encoding='utf-8') as f:
@@ -136,6 +136,7 @@ class Connector:
             data = json.load(f)
         vacencies = [Vacancy(x['id'], x['title'], x['url'], x['salary_from'], x['salary_to'], x['employer'], x['api'])
                      for x in data]
+        return vacencies
 
 
 class Vacancy:
@@ -143,6 +144,7 @@ class Vacancy:
 
     def __init__(self, vacancy_id, title, url, salary_from, salary_to, employer, api):
         self.id = vacancy_id
+        self.title = title
         self.url = url
         self.salary_from = salary_from
         self.salary_to = salary_to
@@ -150,15 +152,15 @@ class Vacancy:
         self.api = api
 
     def __gt__(self, other):
-        if not other.salary_min:
+        if not other.salary_from:
             return True
-        elif not self.salary_min:
+        elif not self.salary_from:
             return False
-        return self.salary_min >= other.salary_min
+        return self.salary_from >= other.salary_from
 
     def __str__(self):
         salary_from = f'От {self.salary_from}' if self.salary_from else ''
         salary_to = f'До {self.salary_to}' if self.salary_to else ''
         if self.salary_from is None and self.salary_to is None:
             self.salary_from = 'Не указана'
-        return f'Вакансия \"{self.title}\" \nКомпания: \"{self.employer}\" \n Зарплата: {self.salary_from} {self.salary_to} \nURL:{self.url}'
+        return f'Вакансия \"{self.title}\" \nКомпания: \"{self.employer}\" \nЗарплата: {salary_from} {salary_to} \nURL:{self.url}'
